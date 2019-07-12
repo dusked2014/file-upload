@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<meta charset="utf-8">
+<title>图片上传测试</title>
+<link th:href="@{/css/bootstrap.min.css}" rel="stylesheet"/>
+<script th:src="@{/js/jquery.min.js}"></script>
+<script th:src="@{/js/ajaxupload.js}"></script>
+<script th:src="@{/js/bootstrap.min.js}"></script>
+<body class="white-bg">
+<div class="row" style="text-align: center">
+    <div class="col-sm-6 col-md-4 col-md-offset-4">
+        <div class="thumbnail" id="img-box" style="display: none">
+            <img src="" alt="通用的占位符缩略图" id="image">
+            <div class="caption">
+                <p>
+                    <a href="#" class="btn btn-primary" role="button" id="submitImage">
+                        修改图片
+                    </a>
+                    <a href="#" class="btn btn-primary" role="button" id="submitLink">
+                        修改链接
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="createFileMModal" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label for="fileLinkUrl" class="col-form-label">链接地址</label>
+                        <input type="text" autofocus class="form-control" id="fileLinkUrl">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="createFileSureBut">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script th:inline="javascript"> var ctx = [[@{/}]]; </script>
+<script type="text/javascript">
+    var linkUrl = "/test";
+    var imageName = "default.jpg";
+    $(window).load(function () {
+
+        //加载默认数据
+        loadDefaultData();
+
+        //绑定事件
+        $('#image').on('click', function () {
+            window.location.href = linkUrl ? linkUrl : "/test";
+        })
+
+        //绑定事件
+        $('#submitLink').on('click', function () {
+            ShowCreateModal("修改链接")
+
+        })
+
+        //初始化上传
+        new AjaxUpload('#submitImage', {
+            action: "/uploadFile",
+            name: 'fileName',
+            responseType: 'json',
+            onComplete: function(file, response) {
+                imageName = response.msg;
+                $('#image').attr("src", ctx + 'imgs/' + response.msg);
+            }
+        });
+
+        function ShowCreateModal(title){
+            $("#createFileTitle").text(title);
+            $('#createFileMModal').modal('show');
+        }
+        $("#createFileSureBut").click(function (){
+            $("#createFileMModal").modal("hide");
+            linkUrl = $("#fileLinkUrl").val();
+            $.get(ctx + "updateImage?fileName="+imageName+"&fileLinkUrl="+linkUrl, function (data) {
+                if (data && data.msg) {
+                    var json = $.parseJSON(data.msg)
+                    linkUrl = json.fileLinkUrl;
+                }
+            });
+        });
+    });
+
+    function loadDefaultData() {
+        $.get(ctx + "queryImage", function (data) {
+            if (data.code == '0') {
+                imageName = data.msg;
+                $('#image').attr("src", ctx + 'imgs/' + data.msg);
+            } else {
+                $('#image').attr("src", ctx + 'imgs/default.jpg')
+            }
+            $('#img-box').show();
+        });
+        $.get(ctx + "queryImage?fileLinkUrl=true", function (data) {
+            if (data) {
+                linkUrl = data.msg;
+            }
+        });
+
+    };
+
+</script>
+</body>
+</html>
